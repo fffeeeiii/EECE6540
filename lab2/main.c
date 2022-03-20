@@ -190,6 +190,7 @@ int main()
 
     for (int i = 0; i < global_size; i++){
         sum_p += result_p[i];
+//        printf("interm(%d) = %f \n", i, result_p[i]);
     }
     sum_p = sum_p * 4;
     

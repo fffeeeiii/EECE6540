@@ -8,7 +8,7 @@ __kernel void Picalculation(
     __global float *pi_out)
 {
     // Define the fractions amount on each work-item
-    int fraction_per_item = 8;
+    int fraction_per_item = 16 / 2;
     int c = 4;
     
     // Define denominator of Leibniz equation
