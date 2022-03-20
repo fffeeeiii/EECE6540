@@ -1,17 +1,17 @@
-/*
- Based on the Leibniz formula for Pi, the equation is:
- Pi/4 = sigma summation [(1/4n+1)-(1/4n+3)] goes from 0 to infinity
- */
+//
+//  Based on the formula for Pi, compute the equation :
+//    SUM{ [(1/4n+1)-(1/4n+3)] } (n = 0,1,2,3....)
+//
+
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 __kernel void Picalculation(
-    __global float *pi_out)
+    __global float *pi_out,
+    int pair_per_item)
 {
-    // Define the fractions amount on each work-item
-    int fraction_per_item = 16 / 2;
     int c = 4;
     
-    // Define denominator of Leibniz equation
+    // Define denominator of the equation
     int i,d;
     
     // Initialize the numerator and equation result
@@ -23,17 +23,21 @@ __kernel void Picalculation(
     
     // Get global work-item id.
     int work_item = get_global_id (0);
-    
+
+    // clear the buffer
+    pi_out[work_item] = 0;
+
     // Offset
-    int term = work_item * fraction_per_item * c;
+    int index = work_item * pair_per_item * c;
     
-    // The equation for work-item. Iteration calculate all fractions.
-        for (i = 0; i < fraction_per_item; i++)
-        {
-            d = i * c + term;
-            e = (n/(d + 1)) - (n/(d + 3));
-            pi_out[work_item] += e;
-        }
- }
+    // The equation for work-item. Iteration calculate all pairs.
+    for (i = 0; i < pair_per_item; i++)
+    {
+        d = i * c + index;
+        e = (n/(d + 1)) - (n/(d + 3));
+        pi_out[work_item] += e;
+    }
+
+}
 
 

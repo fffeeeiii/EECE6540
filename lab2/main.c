@@ -20,6 +20,8 @@ void cleanup();
 #define DEVICE_NAME_LEN 128
 static char dev_name[DEVICE_NAME_LEN];
 
+#define WORK_LOAD 16    // define how many work each item should compute
+
 int main()
 {
     cl_uint platformCount;
@@ -40,6 +42,8 @@ int main()
     char fileName[] = "./mykernel.cl";
     char *source_str;
     size_t source_size;
+
+    int pair_per_item = WORK_LOAD;
 
 #ifdef __APPLE__
     /* Get Platform and Device Info */
@@ -144,11 +148,11 @@ int main()
     //The size of work-item and group
     //int workitem_size = 2048;
     //int group_size = 16;
-    float sum_p = 0;
-    float *result_p = (float *)calloc (global_size, sizeof(float));
+    double sum_p = 0;
+    float *result_p = (float *)calloc(global_size, sizeof(float));
     
     /* Create buffer to hold pi */
-    cl_mem buffer_p = clCreateBuffer(context, CL_MEM_WRITE_ONLY, global_size * sizeof(float), NULL, &ret);
+    cl_mem buffer_p = clCreateBuffer(context, CL_MEM_WRITE_ONLY, global_size*sizeof(float), NULL, &ret);
     if(ret < 0) {
        perror("Couldn't create a buffer");
        exit(1);
@@ -156,10 +160,10 @@ int main()
     //cl_mem result_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE |
     //      CL_MEM_COPY_HOST_PTR, sizeof(result), result, NULL);
 
-    //ret = 0;
+    ret = 0;
     /* Create kernel argument */
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer_p);
-    //ret |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &text_buffer);
+    ret |= clSetKernelArg(kernel, 1, sizeof(cl_int), (void *)&pair_per_item);
     //ret |= clSetKernelArg(kernel, 2, sizeof(chars_per_item), &chars_per_item);
     //ret |= clSetKernelArg(kernel, 3, 4 * sizeof(int), NULL);
     //ret |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &result_buffer);
@@ -169,8 +173,6 @@ int main()
     };
     
     /* Enqueue kernel */
-    //size_t globalws[1] = {workitem_size};
-    //size_t localws[1] = {group_size};
     ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_size,
           &local_size, 0, NULL, NULL);
     
@@ -182,7 +184,7 @@ int main()
 
     /* Copy the ouput data back to the host and print the result*/
     ret = clEnqueueReadBuffer(command_queue, buffer_p, CL_TRUE, 0,
-     global_size * sizeof(float), (void *)result_p, 0, NULL, NULL);
+     global_size*sizeof(float), result_p, 0, NULL, NULL);
     if(ret < 0) {
        perror("Couldn't read the buffer");
        exit(1);
@@ -194,8 +196,9 @@ int main()
     }
     sum_p = sum_p * 4;
     
-    printf("-----Results----- \n");
-    printf("The value of Pi: %f\n", sum_p);
+    printf("\nAllocated %d items to each work-item, %d items computed in tota\nl", pair_per_item*2, pair_per_item*2*(int)global_size);
+    printf("\n-----Results----- \n");
+    printf("The value of Pi: %lf\n", sum_p);
 
 
     /* free resources */
