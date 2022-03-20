@@ -163,6 +163,7 @@ int main()
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer_p);
     ret |= clSetKernelArg(kernel, 1, sizeof(cl_int), (void *)&pair_per_item);
     ret |= clSetKernelArg(kernel, 2, sizeof(cl_int), (void *)&local_size);
+    ret |= clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&result_p);
     if(ret < 0) {
        printf("Couldn't set a kernel argument");
        exit(1);
