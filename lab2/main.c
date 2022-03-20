@@ -58,7 +58,7 @@ int main()
     clGetPlatformIDs(0, NULL, &platformCount);
     platforms = (cl_platform_id*) malloc(sizeof(cl_platform_id) * platformCount);
     // Get the OpenCL platform.
-    platforms[0] = findPlatform("Intel(R) FPGA");
+    platforms[0] = findPlatform("Intel(R) FPGA Emulation");
     if(platforms[0] == NULL) {
       printf("ERROR: Unable to find Intel(R) FPGA OpenCL platform.\n");
       return false;
@@ -196,7 +196,7 @@ int main()
     sum_p = sum_p * 4;
     
     printf("-----Results----- \n");
-    printf("The value of Pi: %1.4f\n", sum_p);
+    printf("The value of Pi: %f\n", sum_p);
 
 
     /* free resources */
