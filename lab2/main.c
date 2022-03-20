@@ -20,7 +20,7 @@ void cleanup();
 #define DEVICE_NAME_LEN 128
 static char dev_name[DEVICE_NAME_LEN];
 
-#define WORK_LOAD 16    // define how many work each item should compute
+#define WORK_LOAD 16    // define how many pair of items each work-item should compute
 
 int main()
 {
@@ -81,11 +81,11 @@ int main()
 
     /* Determine global size and local size */
     clGetDeviceInfo(device_id, CL_DEVICE_MAX_COMPUTE_UNITS,
-      sizeof(num_comp_units), &num_comp_units, NULL);
+                    sizeof(num_comp_units), &num_comp_units, NULL);
     printf("num_comp_units=%u\n", num_comp_units);
 #ifdef __APPLE__
     clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE,
-              sizeof(local_size), &local_size, NULL);
+                    sizeof(local_size), &local_size, NULL);
 #endif
 #ifdef AOCL  /* local size reported Altera FPGA is incorrect */
     local_size = 16;
@@ -145,14 +145,12 @@ int main()
       exit(1);
     }
 
-    //The size of work-item and group
-    //int workitem_size = 2048;
-    //int group_size = 16;
     double sum_p = 0;
     float *result_p = (float *)calloc(global_size, sizeof(float));
     
     /* Create buffer to hold pi */
-    cl_mem buffer_p = clCreateBuffer(context, CL_MEM_WRITE_ONLY, global_size*sizeof(float), NULL, &ret);
+    cl_mem buffer_p = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 
+                          global_size*sizeof(float), NULL, &ret);
     if(ret < 0) {
        perror("Couldn't create a buffer");
        exit(1);
@@ -164,9 +162,6 @@ int main()
     /* Create kernel argument */
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer_p);
     ret |= clSetKernelArg(kernel, 1, sizeof(cl_int), (void *)&pair_per_item);
-    //ret |= clSetKernelArg(kernel, 2, sizeof(chars_per_item), &chars_per_item);
-    //ret |= clSetKernelArg(kernel, 3, 4 * sizeof(int), NULL);
-    //ret |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &result_buffer);
     if(ret < 0) {
        printf("Couldn't set a kernel argument");
        exit(1);
@@ -174,8 +169,7 @@ int main()
     
     /* Enqueue kernel */
     ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_size,
-          &local_size, 0, NULL, NULL);
-    
+          &local_size, 0, NULL, NULL);    
     if(ret < 0) {
        perror("Couldn't enqueue the kernel");
        printf("Error code: %d\n", ret);
@@ -184,7 +178,7 @@ int main()
 
     /* Copy the ouput data back to the host and print the result*/
     ret = clEnqueueReadBuffer(command_queue, buffer_p, CL_TRUE, 0,
-     global_size*sizeof(float), result_p, 0, NULL, NULL);
+                global_size*sizeof(float), result_p, 0, NULL, NULL);
     if(ret < 0) {
        perror("Couldn't read the buffer");
        exit(1);
@@ -192,12 +186,11 @@ int main()
 
     for (int i = 0; i < global_size; i++){
         sum_p += result_p[i];
-//        printf("interm(%d) = %f \n", i, result_p[i]);
     }
     sum_p = sum_p * 4;
     
-    printf("\nAllocated %d items to each work-item, %d items computed in tota\nl", pair_per_item*2, pair_per_item*2*(int)global_size);
     printf("\n-----Results----- \n");
+    printf("\nAllocated %d items to each work-item, %d items computed in tota\nl", pair_per_item*2, pair_per_item*2*(int)global_size);
     printf("The value of Pi: %lf\n", sum_p);
 
 
@@ -205,7 +198,6 @@ int main()
     free(result_p);
 
     clReleaseMemObject(buffer_p);
-//    clReleaseMemObject(result_buffer);
     clReleaseCommandQueue(command_queue);
     clReleaseKernel(kernel);
     clReleaseProgram(program);
