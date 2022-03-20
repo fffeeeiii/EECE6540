@@ -142,10 +142,10 @@ int main()
     }
 
     //The size of work-item and group
-    int workitem_size = 2048;
-    int group_size = 16;
-    float sum_p = 0;
-    float *result_p = (float *)calloc (workitem_size, sizeof(float));
+    //int workitem_size = 2048;
+   // int group_size = 16;
+    //float sum_p = 0;
+    //float *result_p = (float *)calloc (workitem_size, sizeof(float));
     
     /* Create buffer to hold pi */
     cl_mem buffer_p = clCreateBuffer(context, CL_MEM_WRITE_ONLY, workitem_size * sizeof(float), NULL, &ret);
@@ -169,13 +169,10 @@ int main()
     };
     
     /* Enqueue kernel */
-    size_t globalws[1] = {workitem_size};
-    size_t localws[1] = {group_size};
-    ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, globalws,
-          localws, 0, NULL, NULL);
-    /* it is important to check the return value.
-     for example, when enqueueNDRangeKernel may fail when Work group size
-     does not divide evenly into global work size */
+    //size_t globalws[1] = {workitem_size};
+    //size_t localws[1] = {group_size};
+    ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_size,
+          &local_size, 0, NULL, NULL);
     if(ret < 0) {
        perror("Couldn't enqueue the kernel");
        printf("Error code: %d\n", ret);
