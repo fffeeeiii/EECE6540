@@ -20,8 +20,6 @@ void cleanup();
 #define DEVICE_NAME_LEN 128
 static char dev_name[DEVICE_NAME_LEN];
 
-#define TEXT_FILE "kafka.txt"
-
 int main()
 {
     cl_uint platformCount;
@@ -38,18 +36,10 @@ int main()
     size_t global_size;
     size_t local_size;
 
-
     FILE *fp;
     char fileName[] = "./mykernel.cl";
     char *source_str;
     size_t source_size;
-
-    int result[4] = {0, 0, 0, 0};
-    char pattern[16] = {'t','h','a','t','w','i','t','h','h','a','v','e','f','r','o','m'};
-    FILE *text_handle;
-    char *text;
-    size_t text_size;
-    int chars_per_item;
 
 #ifdef __APPLE__
     /* Get Platform and Device Info */
@@ -96,7 +86,7 @@ int main()
 #ifdef AOCL  /* local size reported Altera FPGA is incorrect */
     local_size = 16;
 #endif
-    printf("local_size=%lu\n", local_size);
+    //printf("local_size=%lu\n", local_size);
     global_size = num_comp_units * local_size;
     printf("global_size=%lu, local_size=%lu\n", global_size, local_size);
 
@@ -145,77 +135,75 @@ int main()
     }
 
     /* Create OpenCL Kernel */
-    kernel = clCreateKernel(program, "string_search", &ret);
+    kernel = clCreateKernel(program, "Picalculation", &ret);
     if (ret != CL_SUCCESS) {
       printf("Failed to create kernel.\n");
       exit(1);
     }
 
-    /* Read text file and place content into buffer */
-    text_handle = fopen(TEXT_FILE, "r");
-    if(text_handle == NULL) {
-       perror("Couldn't find the text file");
-       exit(1);
-    }
-    fseek(text_handle, 0, SEEK_END);
-    text_size = ftell(text_handle)-1;
-    rewind(text_handle);
-    text = (char*)calloc(text_size, sizeof(char));
-    fread(text, sizeof(char), text_size, text_handle);
-    fclose(text_handle);
-    chars_per_item = text_size / global_size + 1;
-
-    /* Create buffers to hold the text characters and count */
-    cl_mem text_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY |
-          CL_MEM_COPY_HOST_PTR, text_size, text, &ret);
+    //The size of work-item and group
+    int workitem_size = 2048;
+    int group_size = 16;
+    float sum_p = 0;
+    float *result_p = (float *)calloc (workitem_size, sizeof(float));
+    
+    /* Create buffer to hold pi */
+    cl_mem buffer_p = clCreateBuffer(context, CL_MEM_WRITE_ONLY, workitem_size * sizeof(float), NULL, &ret);
     if(ret < 0) {
        perror("Couldn't create a buffer");
        exit(1);
     };
-    cl_mem result_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE |
-          CL_MEM_COPY_HOST_PTR, sizeof(result), result, NULL);
+    //cl_mem result_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE |
+    //      CL_MEM_COPY_HOST_PTR, sizeof(result), result, NULL);
 
-    ret = 0;
+    //ret = 0;
     /* Create kernel argument */
-    ret = clSetKernelArg(kernel, 0, sizeof(pattern), pattern);
-    ret |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &text_buffer);
-    ret |= clSetKernelArg(kernel, 2, sizeof(chars_per_item), &chars_per_item);
-    ret |= clSetKernelArg(kernel, 3, 4 * sizeof(int), NULL);
-    ret |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &result_buffer);
+    ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer_p);
+    //ret |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &text_buffer);
+    //ret |= clSetKernelArg(kernel, 2, sizeof(chars_per_item), &chars_per_item);
+    //ret |= clSetKernelArg(kernel, 3, 4 * sizeof(int), NULL);
+    //ret |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &result_buffer);
     if(ret < 0) {
        printf("Couldn't set a kernel argument");
        exit(1);
     };
-
+    
     /* Enqueue kernel */
-    ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_size,
-          &local_size, 0, NULL, NULL);
+    size_t globalws[1] = {workitem_size};
+    size_t localws[1] = {group_size};
+    ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, globalws,
+          localws, 0, NULL, NULL);
+    /* it is important to check the return value.
+     for example, when enqueueNDRangeKernel may fail when Work group size
+     does not divide evenly into global work size */
     if(ret < 0) {
        perror("Couldn't enqueue the kernel");
        printf("Error code: %d\n", ret);
        exit(1);
     }
 
-    /* Read and print the result */
-    ret = clEnqueueReadBuffer(command_queue, result_buffer, CL_TRUE, 0,
-       sizeof(result), &result, 0, NULL, NULL);
+    /* Copy the ouput data back to the host and print the result*/
+    ret = clEnqueueReadBuffer(command_queue, buffer_p, CL_TRUE, 0,
+     workitem_size * sizeof(float), (void *)result_p, 0, NULL, NULL);
     if(ret < 0) {
        perror("Couldn't read the buffer");
        exit(1);
     }
 
-    printf("\nResults: \n");
-    printf("Number of occurrences of 'that': %d\n", result[0]);
-    printf("Number of occurrences of 'with': %d\n", result[1]);
-    printf("Number of occurrences of 'have': %d\n", result[2]);
-    printf("Number of occurrences of 'from': %d\n", result[3]);
+    for (int i = 0; i < workitem_size; i++){
+        sum_p += result_p[i];
+    }
+    sum_p = sum_p * 4;
+    
+    printf("-----Results----- \n");
+    printf("The value of Pi: %1.4f\n", sum_p);
 
 
     /* free resources */
-    free(text);
+    free(result_p);
 
-    clReleaseMemObject(text_buffer);
-    clReleaseMemObject(result_buffer);
+    clReleaseMemObject(buffer_p);
+//    clReleaseMemObject(result_buffer);
     clReleaseCommandQueue(command_queue);
     clReleaseKernel(kernel);
     clReleaseProgram(program);

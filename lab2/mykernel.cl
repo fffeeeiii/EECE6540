@@ -1,61 +1,39 @@
-__kernel void string_search(char16 pattern, __global char* text,
-     int chars_per_item, __local int* local_result, 
-     __global int* global_result) {
+/*
+ Based on the Leibniz formula for Pi, the equation is:
+ Pi/4 = sigma summation [(1/4n+1)-(1/4n+3)] goes from 0 to infinity
+ */
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
-   char16 text_vector, check_vector;
+__kernel void Picalculation(
+    __global float *pi_out)
+{
+    // Define the fractions amount on each work-item
+    int fraction_per_item = 8;
+    int c = 4;
+    
+    // Define denominator of Leibniz equation
+    int i,d;
+    
+    // Initialize the numerator and equation result
+    float n = 1.0f;
+    float e = 0.0f;
+    
+    /* Make sure previous processing has completed. All work-items in a work-group executing the kernel on a processor must execute this function before any are allowed to continue execution beyond the barrier. */
+    barrier(CLK_LOCAL_MEM_FENCE);
+    
+    // Get global work-item id.
+    int work_item = get_global_id (0);
+    
+    // Offset
+    int term = work_item * fraction_per_item * c;
+    
+    // The equation for work-item. Iteration calculate all fractions.
+        for (i = 0; i < fraction_per_item; i++)
+        {
+            d = i * c + term;
+            e = (n/(d + 1)) - (n/(d + 3));
+            pi_out[work_item] += e;
+        }
+ }
 
-   /* initialize local data */
-   local_result[0] = 0;
-   local_result[1] = 0;
-   local_result[2] = 0;
-   local_result[3] = 0;
 
-   /* Make sure previous processing has completed */
-   barrier(CLK_LOCAL_MEM_FENCE);
-
-   int item_offset = get_global_id(0) * chars_per_item;
-
-   /* Iterate through characters in text */
-   for(int i=item_offset; i<item_offset + chars_per_item; i++) {
-
-      /* load global text into private buffer */
-      /* vloadn(offset, p) Read vectors from a pointer to memory. 
-         Return sizeof (gentypen) bytes of data read from location 
-         (p + (offset * n)). n is the size of the generic type */
-      text_vector = vload16(0, text + i);
-
-      /* compare text vector and pattern */
-      check_vector = text_vector == pattern;
-
-      /* Each element in a vector can be accessed by .sX 
-       with X being 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F */
-      /* all() identifies whether every most significant bit (MSB) 
-       in every component of a vector is set to 1. */
-      /* Check for 'that' */
-      if(all(check_vector.s0123))
-         atomic_inc(local_result);
-
-      /* Check for 'with' */
-      if(all(check_vector.s4567))
-         atomic_inc(local_result + 1);
-
-      /* Check for 'have' */
-      if(all(check_vector.s89AB))
-         atomic_inc(local_result + 2);
-
-      /* Check for 'from' */
-      if(all(check_vector.sCDEF))
-         atomic_inc(local_result + 3);
-   }
-
-   /* Make sure local processing has completed */
-   barrier(CLK_GLOBAL_MEM_FENCE);
-
-   /* Perform global reduction */
-   if(get_local_id(0) == 0) {
-      atomic_add(global_result, local_result[0]);
-      atomic_add(global_result + 1, local_result[1]);
-      atomic_add(global_result + 2, local_result[2]);
-      atomic_add(global_result + 3, local_result[3]);
-   }
-}
