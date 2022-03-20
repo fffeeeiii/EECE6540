@@ -146,11 +146,11 @@ int main()
     }
 
     double sum_p = 0;
-    float *result_p = (float *)calloc(global_size, sizeof(float));
+    double *result_p = (double *)calloc(num_comp_units, sizeof(double));
     
     /* Create buffer to hold pi */
     cl_mem buffer_p = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 
-                          global_size*sizeof(float), NULL, &ret);
+                          global_size*sizeof(double), NULL, &ret);
     if(ret < 0) {
        perror("Couldn't create a buffer");
        exit(1);
@@ -162,6 +162,7 @@ int main()
     /* Create kernel argument */
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer_p);
     ret |= clSetKernelArg(kernel, 1, sizeof(cl_int), (void *)&pair_per_item);
+    ret |= clSetKernelArg(kernel, 2, sizeof(cl_int), (void *)&local_size);
     if(ret < 0) {
        printf("Couldn't set a kernel argument");
        exit(1);
@@ -178,13 +179,13 @@ int main()
 
     /* Copy the ouput data back to the host and print the result*/
     ret = clEnqueueReadBuffer(command_queue, buffer_p, CL_TRUE, 0,
-                global_size*sizeof(float), result_p, 0, NULL, NULL);
+                num_comp_units*sizeof(double), result_p, 0, NULL, NULL);
     if(ret < 0) {
        perror("Couldn't read the buffer");
        exit(1);
     }
 
-    for (int i = 0; i < global_size; i++){
+    for (int i = 0; i < num_comp_units; i++){
         sum_p += result_p[i];
     }
     sum_p = sum_p * 4;
