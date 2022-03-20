@@ -8,7 +8,8 @@
 __kernel void Picalculation(
     __global double *buffer_p,
     int pair_per_item,
-    int local_size)
+    int local_size,
+    __global double *result_p)
 {
     int c = 4;
     
@@ -20,7 +21,7 @@ __kernel void Picalculation(
     double e = 0.0f;
     
     // Make sure previous processing has completed 
-    barrier(CLK_LOCAL_MEM_FENCE);
+    barrier(CLK_GLOBAL_MEM_FENCE);
     
     // Get global ID, group ID and local ID.
     int global_id = get_global_id(0);
@@ -28,7 +29,7 @@ __kernel void Picalculation(
     int local_id = get_local_id(0);
 
     // clear the buffer
-    pi_out[global_id] = 0;    
+    buffer_p[global_id] = 0;    
 
     // Offset
     int index = global_id * pair_per_item * c;
@@ -42,12 +43,12 @@ __kernel void Picalculation(
     }
     
     // Make sure local processing has completed */
-    barrier(CLK_GLOBAL_MEM_FENCE);
+    barrier(CLK_LOCAL_MEM_FENCE);
     if(local_id == 0) {
-        result[group_id] = 0;
+        result_p[group_id] = 0;
         for (i = global_id; i < (global_id + local_size); i++)
         {
-            result[group_id] += buffer_p[global_id];
+            result_p[group_id] += buffer_p[global_id];
         }
     }
 
