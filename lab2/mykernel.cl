@@ -6,36 +6,49 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 __kernel void Picalculation(
-    __global float *pi_out,
-    int pair_per_item)
+    __global double *buffer_p,
+    int pair_per_item,
+    int local_size)
 {
     int c = 4;
     
-    // Define denominator of the equation
+    // Define the index for the denominator
     int i,d;
     
     // Initialize the numerator and equation result
-    float n = 1.0f;
-    float e = 0.0f;
+    double n = 1.0f;
+    double e = 0.0f;
     
-    /* Make sure previous processing has completed. All work-items in a work-group executing the kernel on a processor must execute this function before any are allowed to continue execution beyond the barrier. */
+    // Make sure previous processing has completed 
     barrier(CLK_LOCAL_MEM_FENCE);
     
-    // Get global work-item id.
-    int work_item = get_global_id (0);
+    // Get global ID, group ID and local ID.
+    int global_id = get_global_id(0);
+    int group_id = get_group_id(0);
+    int local_id = get_local_id(0);
 
     // clear the buffer
-    pi_out[work_item] = 0;
+    pi_out[global_id] = 0;    
 
     // Offset
-    int index = work_item * pair_per_item * c;
+    int index = global_id * pair_per_item * c;
     
     // The equation for work-item. Iteration calculate all pairs.
     for (i = 0; i < pair_per_item; i++)
     {
         d = i * c + index;
         e = (n/(d + 1)) - (n/(d + 3));
-        pi_out[work_item] += e;
+        buffer_p[global_id] += e;
+    }
+    
+    // Make sure local processing has completed */
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    if(local_id == 0) {
+        result[group_id] = 0;
+        for (i = global_id; i < (global_id + local_size); i++)
+        {
+            result[group_id] += buffer_p[global_id];
+        }
     }
 
 }
