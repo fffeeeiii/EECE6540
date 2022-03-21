@@ -43,12 +43,12 @@ __kernel void Picalculation(
     }
     
     // Make sure local processing has completed */
-    barrier(CLK_LOCAL_MEM_FENCE);
+    barrier(CLK_GLOBAL_MEM_FENCE);
     if(local_id == 0) {
         result_p[group_id] = 0;
         for (i = global_id; i < (global_id + local_size); i++)
         {
-            result_p[group_id] += buffer_p[global_id];
+            result_p[group_id] += buffer_p[i];
         }
     }
 

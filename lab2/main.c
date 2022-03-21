@@ -146,14 +146,21 @@ int main()
     }
 
     double sum_p = 0;
-    double *result_p = (double *)calloc(num_comp_units, sizeof(double));
+    double *result = (double *)calloc(num_comp_units, sizeof(double));
     
+    cl_mem result_p = clCreateBuffer(context, CL_MEM_READ_WRITE,
+                        num_comp_units*sizeof(double), NULL, &ret);
+    if (ret < 0) {
+        perror("Couldn't create a buffer");
+        exit(1);
+    }
+
     /* Create buffer to hold pi */
-    cl_mem buffer_p = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 
+    cl_mem buffer_p = clCreateBuffer(context, CL_MEM_READ_WRITE, 
                           global_size*sizeof(double), NULL, &ret);
-    if(ret < 0) {
-       perror("Couldn't create a buffer");
-       exit(1);
+    if (ret < 0) {
+        perror("Couldn't create a buffer");
+        exit(1);
     };
     //cl_mem result_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE |
     //      CL_MEM_COPY_HOST_PTR, sizeof(result), result, NULL);
@@ -179,26 +186,27 @@ int main()
     }
 
     /* Copy the ouput data back to the host and print the result*/
-    ret = clEnqueueReadBuffer(command_queue, buffer_p, CL_TRUE, 0,
-                num_comp_units*sizeof(double), result_p, 0, NULL, NULL);
+    ret = clEnqueueReadBuffer(command_queue, result_p, CL_TRUE, 0,
+                num_comp_units*sizeof(double), result, 0, NULL, NULL);
     if(ret < 0) {
        perror("Couldn't read the buffer");
        exit(1);
     }
 
     for (int i = 0; i < num_comp_units; i++){
-        sum_p += result_p[i];
+        sum_p += result[i];
+//        printf("result[%d] = %lf\n", i, result[i]);
     }
     sum_p = sum_p * 4;
     
     printf("\n-----Results----- \n");
     printf("\nAllocated %d items to each work-item, %d items computed in tota\nl", pair_per_item*2, pair_per_item*2*(int)global_size);
-    printf("The value of Pi: %lf\n", sum_p);
+    printf("The value of Pi: %.12f\n", sum_p);
 
 
     /* free resources */
-    free(result_p);
-
+    free(result);
+    clReleaseMemObject(result_p);
     clReleaseMemObject(buffer_p);
     clReleaseCommandQueue(command_queue);
     clReleaseKernel(kernel);
