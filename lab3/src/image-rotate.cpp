@@ -135,7 +135,6 @@ int main() {
   // Set the rotate angle Theta
   float sinTheta = sin(Theta * PI / 180.0f);
   float cosTheta = cos(Theta * PI / 180.0f);
-  printf("Rows and Cols = %d, %d \n", imageRows, imageCols);  
 
 #ifndef FPGA_PROFILE
   // Query about the platform
