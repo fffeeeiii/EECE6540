@@ -95,8 +95,10 @@ void ImageRotate(queue &q, float *image_in, float *image_out, float sinTheta,
         //     from (row, col) around (ImageRows/2, ImageCols/2) 
         int ix = row - (int)ImageRows/2;
         int iy = col - (int)ImageCols/2;     
-        float xpos = ((float)ix)*cosTheta + ((float)iy)*sinTheta;
-        float ypos = -1.0f*((float)ix)*sinTheta + ((float)iy)*cosTheta;
+        //float xpos = ((float)ix)*cosTheta + ((float)iy)*sinTheta;
+        //float ypos = -1.0f*((float)ix)*sinTheta + ((float)iy)*cosTheta;
+        float xpos = row;
+        float ypos = col;
     
         // Bound checking 
         if(((int)xpos >= 0) && ((int)xpos < ImageRows) && ((int)ypos >= 0) && ((int)ypos < ImageCols)) {
@@ -131,12 +133,8 @@ int main() {
   int i;
 
   // Set the rotate angle Theta
-  // Theta = 315 degrees 
-  //  float sinTheta = -0.70710678118;
-  //  float cosTheta = 0.70710678118;
   float sinTheta = sin(Theta * PI / 180.0f);
   float cosTheta = cos(Theta * PI / 180.0f);
-  printf("sin and cos = %f, %f \n", sinTheta, cosTheta);  
 
 #ifndef FPGA_PROFILE
   // Query about the platform
