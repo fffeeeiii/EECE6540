@@ -42,7 +42,7 @@ class Timer {
 
 static const char* inputImagePath = "./Images/cat.bmp";
 
-#define Theta 30        // Counter-clockwise Rotate Angle (degree)
+#define Theta 75        // Counter-clockwise Rotate Angle (degree)
 #define PI 3.14159265358979
 
 #define IMAGE_SIZE (720*1080)
@@ -92,21 +92,24 @@ void ImageRotate(queue &q, float *image_in, float *image_out, float sinTheta,
         int row = item[0];
         int col = item[1];       
         
-        // calculate the new position (x2, y2) 
-        //     from (x1, x1) around (x0, x0) 
+        // calculate the new position (x2, y2) from (x1, x1) 
+        // coordinate trasform, central point (x0, x0)  
         int x1 = col;
         int y1 = ImageRows - row;
         int x0 = (int)(ImageCols/2);
         int y0 = ImageRows - (int)(ImageRows/2);
         
+        // rotate counter-clockwise
         float fx2 = ((float)(x1-x0))*cosTheta - ((float)(y1-y0))*sinTheta + x0;
         float fy2 = ((float)(x1-x0))*sinTheta + ((float)(y1-y0))*cosTheta + y0;
+        
+        // coordinate trasform back 
         int x2 = (int)fx2;
         int y2 = ImageRows - (int)fy2;
         
         // Bound checking 
         if((y2 >= 0) && (y2 < ImageRows) && (x2 >= 0) && (x2 < ImageCols)) {
-	    // Write the new pixel value
+	        // move pixel to the new posotion
             dstPtr[y2*ImageCols+x2] = srcPtr[row*ImageCols+col];            
         }
         
@@ -162,6 +165,8 @@ int main() {
   /* Read in the BMP image */
   hInputImage = readBmpFloat(inputImagePath, &imageRows, &imageCols);
   printf("imageRows=%d, imageCols=%d\n", imageRows, imageCols);
+  
+  printf("\nRotate the image conter-clockwise %d degree.\n\n", Theta);
   
   /* Allocate space for the output image */
   hOutputImage = (float *)malloc( imageRows*imageCols * sizeof(float) );
