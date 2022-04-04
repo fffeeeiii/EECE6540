@@ -61,11 +61,11 @@ void ImageRotate(queue &q, float *image_in, float *image_out, float sinTheta,
     buffer<float, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols));
     buffer<float, 1> image_out_buf(image_out, range<1>(ImageRows*ImageCols));
 
-    //for(int i=0; i<ImageRows; i++) {
-    //  for(int j=0; j<ImageCols; j++)
-    //    std::cout << "image_out[" << i << "," << j << "]=" << (float *)image_out[i*ImageCols+j] << std::endl;
-    //}
-
+    for(int i=0; i<ImageRows; i++) {
+      for(int j=0; j<ImageCols; j++)
+        std::cout << "image_out[" << i << "," << j << "]=" << (float *)image_out[i*ImageCols+j] << std::endl;
+    }
+ /*
     // Create the range object for the pixel data.
     range<2> num_items{ImageRows, ImageCols};
 
@@ -106,7 +106,7 @@ void ImageRotate(queue &q, float *image_in, float *image_out, float sinTheta,
       });
 
     });
-
+*/
 }
 
 
@@ -131,12 +131,9 @@ int main() {
   int i;
 
   // Set the rotate angle Theta
-  // Theta = 315 degrees 
-  //  float sinTheta = -0.70710678118;
-  //  float cosTheta = 0.70710678118;
   float sinTheta = sin(Theta * PI / 180.0f);
   float cosTheta = cos(Theta * PI / 180.0f);
-  printf("sin and cos = %f, %f \n", sinTheta, cosTheta);  
+  printf("Rows and Cols = %d, %d \n", imageRows, imageCols);  
 
 #ifndef FPGA_PROFILE
   // Query about the platform
