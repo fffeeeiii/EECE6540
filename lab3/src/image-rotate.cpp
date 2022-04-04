@@ -1,5 +1,5 @@
 //==============================================================
-// EECE.6540 Lab 3
+// EECE。6540 Lab 3
 //
 // Image Rotate with DPC++
 //
@@ -42,7 +42,7 @@ class Timer {
 
 static const char* inputImagePath = "./Images/cat.bmp";
 
-#define Theta 45        // Rotate Angle (degree)
+#define Theta 30        // Counter-clockwise Rotate Angle (degree)
 #define PI 3.14159265358979
 
 #define IMAGE_SIZE (720*1080)
@@ -56,6 +56,7 @@ void ImageRotate(queue &q, float *image_in, float *image_out, float sinTheta,
     float cosTheta, const size_t ImageRows, const size_t ImageCols) 
 {
 
+//    printf("In Function:sinTheta=%f, cosTheta=%f.\n", sinTheta, cosTheta);
     // We create buffers for the input and output data.
     //
     buffer<float, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols));
@@ -63,9 +64,9 @@ void ImageRotate(queue &q, float *image_in, float *image_out, float sinTheta,
 
     //for(int i=0; i<ImageRows; i++) {
     //  for(int j=0; j<ImageCols; j++)
-    //    std::cout << "image_out[" << i << "," << j << "]=" << (float *)image_out[i*ImageCols+j] << std::endl;  
+    //    std::cout << "image_out[" << i << "," << j << "]=" << (float *)image_out[i*ImageCols+j] << std::endl;
     //}
- 
+
     // Create the range object for the pixel data.
     range<2> num_items{ImageRows, ImageCols};
 
@@ -91,20 +92,24 @@ void ImageRotate(queue &q, float *image_in, float *image_out, float sinTheta,
         int row = item[0];
         int col = item[1];       
         
-        // calculate the new position (xpos, ypos) 
-        //     from (row, col) around (ImageRows/2, ImageCols/2) 
-        int ix = row - (int)ImageRows/2;
-        int iy = col - (int)ImageCols/2;     
-        //float xpos = ((float)ix)*cosTheta + ((float)iy)*sinTheta;
-        //float ypos = -1.0f*((float)ix)*sinTheta + ((float)iy)*cosTheta;
-        float xpos = row;
-        float ypos = col;
-    
+        // calculate the new position (x2, y2) 
+        //     from (x1, x1) around (x0, x0) 
+        int x1 = col;
+        int y1 = ImageRows - row;
+        int x0 = (int)(ImageCols/2);
+        int y0 = ImageRows - (int)(ImageRows/2);
+        
+        float fx2 = ((float)(x1-x0))*cosTheta - ((float)(y1-y0))*sinTheta + x0;
+        float fy2 = ((float)(x1-x0))*sinTheta + ((float)(y1-y0))*cosTheta + y0;
+        int x2 = (int)fx2;
+        int y2 = ImageRows - (int)fy2;
+        
         // Bound checking 
-        if(((int)xpos >= 0) && ((int)xpos < ImageRows) && ((int)ypos >= 0) && ((int)ypos < ImageCols)) {
-        	// Write the new pixel value
-        	dstPtr[xpos*ImageCols+ypos] = srcPtr[row*ImageCols+col];
+        if((y2 >= 0) && (y2 < ImageRows) && (x2 >= 0) && (x2 < ImageCols)) {
+	    // Write the new pixel value
+            dstPtr[y2*ImageCols+x2] = srcPtr[row*ImageCols+col];            
         }
+        
       });
 
     });
@@ -161,7 +166,7 @@ int main() {
   /* Allocate space for the output image */
   hOutputImage = (float *)malloc( imageRows*imageCols * sizeof(float) );
   for(i=0; i<imageRows*imageCols; i++) {
-    hOutputImage[i] = 1234.0;
+    hOutputImage[i] = 1.0;
   }
 
   Timer t;
