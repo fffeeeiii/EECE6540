@@ -93,19 +93,19 @@ void ImageRotate(queue &q, float *image_in, float *image_out, float sinTheta,
         
         // calculate the new position (xpos, ypos) 
         //     from (row, col) around (ImageRows/2, ImageCols/2) 
-        ix = row - (int)ImageRows/2;
-        iy = col - (int)ImageCols/2;     
+        int ix = row - (int)ImageRows/2;
+        int iy = col - (int)ImageCols/2;     
         float xpos = ((float)ix)*cosTheta + ((float)iy)*sinTheta;
         float ypos = -1.0f*((float)ix)*sinTheta + ((float)iy)*cosTheta;
     
         // Bound checking 
-        if(((int)xpos >= 0) && ((int)xpos < W) && ((int)ypos >= 0) && ((int)ypos < H)) {
+        if(((int)xpos >= 0) && ((int)xpos < ImageRows) && ((int)ypos >= 0) && ((int)ypos < ImageCols)) {
         	// Write the new pixel value
         	dstPtr[xpos*ImageCols+ypos] = srcPtr[row*ImageCols+col];
         }
-      }
+      });
 
-    }
+    });
 
 }
 
@@ -128,6 +128,7 @@ int main() {
 
   int imageRows;
   int imageCols;
+  int i;
 
   // Set the rotate angle Theta
   // Theta = 315 degrees 
