@@ -1,5 +1,5 @@
 //==============================================================
-// EECE。6540 Lab 3
+// EECE.6540 Lab 3
 //
 // Image Rotate with DPC++
 //
@@ -49,9 +49,9 @@ static const char* inputImagePath = "./Images/cat.bmp";
 constexpr size_t array_size = IMAGE_SIZE;
 typedef std::array<float, array_size> FloatArray;
 
-//************************************
+//************************************//
 // Image Rotate in DPC++ on device: 
-//************************************
+//************************************//
 void ImageRotate(queue &q, float *image_in, float *image_out, float sinTheta, 
     float cosTheta, const size_t ImageRows, const size_t ImageCols) 
 {
@@ -61,11 +61,11 @@ void ImageRotate(queue &q, float *image_in, float *image_out, float sinTheta,
     buffer<float, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols));
     buffer<float, 1> image_out_buf(image_out, range<1>(ImageRows*ImageCols));
 
-    for(int i=0; i<ImageRows; i++) {
-      for(int j=0; j<ImageCols; j++)
-        std::cout << "image_out[" << i << "," << j << "]=" << (float *)image_out[i*ImageCols+j] << std::endl;
-    }
- /*
+    //for(int i=0; i<ImageRows; i++) {
+    //  for(int j=0; j<ImageCols; j++)
+    //    std::cout << "image_out[" << i << "," << j << "]=" << (float *)image_out[i*ImageCols+j] << std::endl;  
+    //}
+ 
     // Create the range object for the pixel data.
     range<2> num_items{ImageRows, ImageCols};
 
@@ -95,8 +95,10 @@ void ImageRotate(queue &q, float *image_in, float *image_out, float sinTheta,
         //     from (row, col) around (ImageRows/2, ImageCols/2) 
         int ix = row - (int)ImageRows/2;
         int iy = col - (int)ImageCols/2;     
-        float xpos = ((float)ix)*cosTheta + ((float)iy)*sinTheta;
-        float ypos = -1.0f*((float)ix)*sinTheta + ((float)iy)*cosTheta;
+        //float xpos = ((float)ix)*cosTheta + ((float)iy)*sinTheta;
+        //float ypos = -1.0f*((float)ix)*sinTheta + ((float)iy)*cosTheta;
+        float xpos = row;
+        float ypos = col;
     
         // Bound checking 
         if(((int)xpos >= 0) && ((int)xpos < ImageRows) && ((int)ypos >= 0) && ((int)ypos < ImageCols)) {
@@ -106,7 +108,7 @@ void ImageRotate(queue &q, float *image_in, float *image_out, float sinTheta,
       });
 
     });
-*/
+
 }
 
 
